@@ -14,7 +14,6 @@ import (
 	"errors"
 	"github.com/libpoly/libcardutils-go"
 	"github.com/qwerty0981/formAssistant"
-	flag "github.com/ogier/pflag"
 )
 
 func getEntryFromForm(formData, field string) string {
@@ -31,12 +30,12 @@ func getForm(url string) (string, error) {
 	response, err := http.Get(url)
 
 	if err != nil {
-		return "", errors.New("Failed to GET the form")
+		return "", errors.New("[ERROR]: Failed to GET the form")
 	}
 
 	formContent, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return "", errors.New("Failed to read bytes from form GET response")
+		return "", errors.New("[ERROR]: Failed to read bytes from form GET response")
 	}
 
 	return string(formContent), nil
@@ -47,13 +46,13 @@ func clear() {
       c := exec.Command("cmd", "/c", "cls");
       c.Stdout = os.Stdout
       if err := c.Run(); err != nil {
-         fmt.Println("Error Clearing Screen");
+         fmt.Println("Failed to clear screen");
       }
    } else if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
       c := exec.Command("clear");
       c.Stdout = os.Stdout
       if err := c.Run(); err != nil {
-         fmt.Println("Error Clearing Screen");
+         fmt.Println("Failed to clear screen");
       }
    }
 }
@@ -71,15 +70,6 @@ func main() {
 	}
 
 
-	// Setup Flags
-	var verbosity *int = flag.IntP("logLevel", "v", 1, "Defines the verbosity of the logging.\n" +
-					"\t\t1 - Critial Errors only (default)\n" +
-					"\t\t2 - Includes Warnings\n" +
-					"\t\t3 - Detailed logging\n" +
-					"\t\t4 - Debug logging (May effect performance)")
-	flag.Parse()
-	// Finished loading flags
-	fmt.Println("Verbosity:",verbosity)
 	clear()
 
 	reader := bufio.NewReader(os.Stdin)
@@ -93,7 +83,7 @@ func main() {
 	formURL = strings.TrimRight(formURL, "\n\r")
 	gForm := form.GoogleForm(strings.TrimSuffix(formURL, "viewform") + "formResponse")
 
-	fmt.Printf("Attempting to GET the form...")
+	fmt.Printf("[INFO]: Attempting to GET the form...")
 
 	formData, err := getForm(formURL)
 	if err != nil {
@@ -104,17 +94,17 @@ func main() {
 
 	fmt.Printf("Done\n")
 
-	fmt.Printf("Attempting to find entry IDs...\n")
+	fmt.Printf("[INFO]: Attempting to find entry IDs...\n")
 
 	for k, v := range supportedEntries {
-		fmt.Println("  Locating " + k + "...")
+		fmt.Println("[INFO]:  Locating " + k + "...")
 
 		for _, pattern := range v {
-			fmt.Printf("\tTrying %s: ", pattern)
+			fmt.Printf("[INFO]: \tTrying %s: ", pattern)
 			match := getEntryFromForm(formData, pattern)
 			if match != "" {
 				fmt.Printf("Found!\n")
-				fmt.Printf("\tAdding %s as %s entry\n", match, k)
+				fmt.Printf("[INFO]: \tAdding %s as %s entry\n", match, k)
 				gForm.AddEndpoint(k, match)
 				break
 			} else {
@@ -123,7 +113,7 @@ func main() {
 		}
 	}
 
-	fmt.Println("The form has been configured")
+	fmt.Println("[INFO]: The form has been configured")
 	fmt.Println("Please press enter to start accepting card scans")
 	reader.ReadString('\n')
 
