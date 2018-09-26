@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"net/http"
 	"fmt"
+	"time"
 	"io/ioutil"
 	"regexp"
 	"strings"
@@ -57,11 +58,15 @@ func clear() {
    }
 }
 
+func makeEmail(fname, lname, num string) string {
+	return strings.ToLower(string(fname[0]) + lname + num + "@floridapoly.edu")
+}
+
 func main() {
 	supportedEntries := map[string][]string{
 		"First Name": {"first name", "firstName"},
 		"Last Name": {"last name", "lastName"},
-		"Student ID": {"student id", "studentID", "student number", "studentNumber"},
+		"Student ID": {"student id", "id", "studentID", "student number", "studentNumber"},
 		"Email": {"email", "studentEmail", "student Email"},
 	}
 
@@ -137,7 +142,26 @@ func main() {
 		}
 
 		card.Swipe(scanIn)
+		postData := make(map[string]string)
 
-		fmt.Println(card)
+		for k, _ := range gForm.Endpoints() {
+			switch(k){
+			case "First Name":
+				postData["First Name"] = card.GetFirstName()
+			case "Last Name":
+				postData["Last Name"] = card.GetLastName()
+			case "Email":
+				postData["Email"] = makeEmail(card.GetFirstName(), card.GetLastName(), card.GetID())
+			case "Student ID":
+				postData["Student ID"] = card.GetID()
+			default:
+				fmt.Println("Unhandled Endpoint:", k)
+			}
+		}
+
+		gForm.Post(postData)
+
+		fmt.Println("Submitted successfully!")
+		time.Sleep(1 * time.Second)
 	}
 }
