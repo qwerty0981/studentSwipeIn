@@ -11,6 +11,8 @@ import (
 	"os"
 	"os/exec"
 	"errors"
+	"github.com/libpoly/libcardutils-go"
+	"github.com/qwerty0981/formAssistant"
 	flag "github.com/ogier/pflag"
 )
 
@@ -84,6 +86,7 @@ func main() {
 	}
 
 	formURL = strings.TrimRight(formURL, "\n\r")
+	gForm := form.GoogleForm(strings.TrimSuffix(formURL, "viewform") + "formResponse")
 
 	fmt.Printf("Attempting to GET the form...")
 
@@ -106,11 +109,35 @@ func main() {
 			match := getEntryFromForm(formData, pattern)
 			if match != "" {
 				fmt.Printf("Found!\n")
-				// Add entry
+				fmt.Printf("\tAdding %s as %s entry\n", match, k)
+				gForm.AddEndpoint(k, match)
 				break
 			} else {
 				fmt.Printf("Failed\n")
 			}
 		}
+	}
+
+	fmt.Println("The form has been configured")
+	fmt.Println("Please press enter to start accepting card scans")
+	reader.ReadString('\n')
+
+	card := cardutils.New()
+
+	for {
+		clear()
+		fmt.Println("Please swipe a card:")
+		scanIn, _ := reader.ReadString('\n')
+
+		scanIn = strings.TrimRight(scanIn, "\n\r")
+
+		if scanIn == "exit" || scanIn == "quit" {
+			fmt.Println("Quiting...")
+			break
+		}
+
+		card.Swipe(scanIn)
+
+		fmt.Println(card)
 	}
 }
