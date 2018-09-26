@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"regexp"
+	"strings"
 	"runtime"
 	"os"
 	"os/exec"
@@ -13,22 +14,29 @@ import (
 	flag "github.com/ogier/pflag"
 )
 
-func getEntryFrom(url, field string) (string, error) {
+func getEntryFromForm(formData, field string) string {
+	reg := *regexp.MustCompile(`(?mi)aria-label\=\"` + field + `\" [a-z0-9\.\'\"\-\= ]* name=\"(entry\.[0-9]*)\"`)
+
+	match := reg.FindStringSubmatch(formData)
+	if match == nil {
+		return ""
+	}
+	return match[1]
+}
+
+func getForm(url string) (string, error) {
 	response, err := http.Get(url)
+
 	if err != nil {
 		return "", errors.New("Failed to GET the form")
 	}
 
-	contents, err := ioutil.ReadAll(response.Body)
+	formContent, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return "", errors.New("Failed to read the response body")
+		return "", errors.New("Failed to read bytes from form GET response")
 	}
 
-	input := string(contents)
-	reg := *regexp.MustCompile(`(?mi)aria-label\=\"` + field + `\" [a-z0-9\.\'\"\-\= ]* name=\"(entry\.[0-9]*)\"`)
-
-	match := reg.FindStringSubmatch(input)
-	return match[1], nil
+	return string(formContent), nil
 }
 
 func clear() {
@@ -48,6 +56,14 @@ func clear() {
 }
 
 func main() {
+	supportedEntries := map[string][]string{
+		"First Name": {"first name", "firstName"},
+		"Last Name": {"last name", "lastName"},
+		"Student ID": {"student id", "studentID", "student number", "studentNumber"},
+		"Email": {"email", "studentEmail", "student Email"},
+	}
+
+
 	// Setup Flags
 	var verbosity *int = flag.IntP("logLevel", "v", 1, "Defines the verbosity of the logging.\n" +
 					"\t\t1 - Critial Errors only (default)\n" +
@@ -56,13 +72,13 @@ func main() {
 					"\t\t4 - Debug logging (May effect performance)")
 	flag.Parse()
 	// Finished loading flags
-
+	fmt.Println("Verbosity:",verbosity)
 	clear()
 
 	reader := bufio.NewReader(os.Stdin)
 
 	fmt.Println("Please enter the url of the Google form you are linking to:")
-	formURL, err := reader.ReadSting("\n")
+	formURL, err := reader.ReadString('\n')
 	if err != nil {
 		//Print failed
 	}
@@ -72,6 +88,29 @@ func main() {
 	fmt.Printf("Attempting to GET the form...")
 
 	formData, err := getForm(formURL)
+	if err != nil {
+		fmt.Printf("Failed!\n")
+		fmt.Println("\t-> ", err)
+		// Handle Error		
+	}
 
-	fmt.Println("Received logging level of:", *verbosity)
+	fmt.Printf("Done\n")
+
+	fmt.Printf("Attempting to find entry IDs...\n")
+
+	for k, v := range supportedEntries {
+		fmt.Println("  Locating " + k + "...")
+
+		for _, pattern := range v {
+			fmt.Printf("\tTrying %s: ", pattern)
+			match := getEntryFromForm(formData, pattern)
+			if match != "" {
+				fmt.Printf("Found!\n")
+				// Add entry
+				break
+			} else {
+				fmt.Printf("Failed\n")
+			}
+		}
+	}
 }
