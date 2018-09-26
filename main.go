@@ -26,16 +26,20 @@ func getEntryFromForm(formData, field string) string {
 	return match[1]
 }
 
+func cleanURL(url string) string {
+	return strings.TrimSuffix(url, "?usp=sf_link")
+}
+
 func getForm(url string) (string, error) {
 	response, err := http.Get(url)
 
 	if err != nil {
-		return "", errors.New("[ERROR]: Failed to GET the form")
+		return "", errors.New("Invalid URL? Make sure a google form was supplied")
 	}
 
 	formContent, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return "", errors.New("[ERROR]: Failed to read bytes from form GET response")
+		return "", errors.New("Failed to read bytes from form GET response")
 	}
 
 	return string(formContent), nil
@@ -69,6 +73,7 @@ func main() {
 		"Email": {"email", "studentEmail", "student Email"},
 	}
 
+	errText, infoText := "[ERROR]:", "[INFO] :"
 
 	clear()
 
@@ -81,30 +86,32 @@ func main() {
 	}
 
 	formURL = strings.TrimRight(formURL, "\n\r")
+	formURL = cleanURL(formURL)
 	gForm := form.GoogleForm(strings.TrimSuffix(formURL, "viewform") + "formResponse")
 
-	fmt.Printf("[INFO]: Attempting to GET the form...")
+	fmt.Printf("%s Attempting to GET the form...", infoText)
 
 	formData, err := getForm(formURL)
 	if err != nil {
 		fmt.Printf("Failed!\n")
-		fmt.Println("\t-> ", err)
-		// Handle Error		
+		fmt.Println(errText, err)
+		time.Sleep(5 * time.Second)
+		os.Exit(1)
 	}
 
 	fmt.Printf("Done\n")
 
-	fmt.Printf("[INFO]: Attempting to find entry IDs...\n")
+	fmt.Println(infoText, "Attempting to find entry IDs...")
 
 	for k, v := range supportedEntries {
-		fmt.Println("[INFO]:  Locating " + k + "...")
+		fmt.Println(infoText, "  Locating " + k + "...")
 
 		for _, pattern := range v {
-			fmt.Printf("[INFO]: \tTrying %s: ", pattern)
+			fmt.Printf("%s \tTrying %s: ", infoText, pattern)
 			match := getEntryFromForm(formData, pattern)
 			if match != "" {
 				fmt.Printf("Found!\n")
-				fmt.Printf("[INFO]: \tAdding %s as %s entry\n", match, k)
+				fmt.Printf("%s \tAdding %s as %s entry\n", infoText, match, k)
 				gForm.AddEndpoint(k, match)
 				break
 			} else {
@@ -113,7 +120,14 @@ func main() {
 		}
 	}
 
-	fmt.Println("[INFO]: The form has been configured")
+	fmt.Printf("Form configured with: ")
+	var endpoints string
+	for endpoint, _ := range gForm.Endpoints() {
+		endpoints += endpoint + ", "
+	}
+	endpoints = strings.TrimSuffix(endpoints, ", ") + "\n"
+	fmt.Printf("%s", endpoints)
+
 	fmt.Println("Please press enter to start accepting card scans")
 	reader.ReadString('\n')
 
