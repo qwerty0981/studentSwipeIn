@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"strconv"
 	"github.com/libpoly/libcardutils-go"
 	"./delivery"
 )
@@ -51,13 +52,22 @@ func main() {
 		}
 		fmt.Println("\nPlease select an option:")
 
-		fmt.Scanf("%d", &option)
-
-		if option >= 1 && option <= len(initializers) {
-			break;
+		textOption, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Println("Failed to read string:", err)
+			time.Sleep(time.Second)
+			os.Exit(1)
 		}
 
-		reader.ReadString('\n')
+		option, err = strconv.Atoi(strings.TrimRight(textOption, "\n\r"))
+
+		if err == nil {
+			if option >= 1 && option <= len(initializers) {
+				break;
+			}
+		}
+
+		fmt.Println(err)
 
 		fmt.Println("Error invalid item selected")
 		time.Sleep(2 * time.Second)
