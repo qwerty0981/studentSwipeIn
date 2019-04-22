@@ -102,10 +102,19 @@ func main() {
 
 		card.Swipe(scanIn)
 
+      clear()
+
+      fmt.Println("Please enter the student's phone number:")
+      scanIn, _ = reader.ReadString('\n')
+
+      scanIn = strings.TrimRight(scanIn, "\n\r")
+
+
 		CardData["First Name"] = card.GetFirstName()
 		CardData["Last Name"] = card.GetLastName()
 		CardData["Email"] = makeEmail(card.GetFirstName(), card.GetLastName(), card.GetID())
 		CardData["Student ID"] = card.GetID()
+      CardData["PhoneNumber"] = scanIn
 
 		driver.Input(CardData)
 

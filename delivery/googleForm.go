@@ -42,6 +42,7 @@ func (gf GoogleForm) Configure() (Driver, error) {
 		"Last Name": {"last name", "lastName"},
 		"Student ID": {"student id", "id", "studentID", "student number", "studentNumber"},
 		"Email": {"email", "studentEmail", "student Email"},
+      "PhoneNumber": {"number", "phone", "Phone Number", "phone number", "Phone number"},
 	}
 
 	reader := bufio.NewReader(os.Stdin)
