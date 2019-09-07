@@ -10,24 +10,34 @@ import (
 	"os"
 	"errors"
 	"time"
-	"github.com/qwerty0981/formAssistant"
+	"github.com/qwerty0981/FormAssistant"
 )
 
-type GoogleForm struct{
-}
+type GoogleForm struct{}
 
 type googleFormDriver struct {
 	googleForm form.Form
 }
 
-func (gfd googleFormDriver) Input(data map[string]string) error {
-	for k, _ := range gfd.googleForm.Endpoints() {
-		if _, ok := data[k]; !ok {
+func (gfd googleFormDriver) Input(data map[string]string) error {	
+   formData, _ := getForm(gfd.googleForm.GetURL())
+
+   values := getHiddenValuesFromForm(formData)
+
+   for k,v := range values {
+      data[k] = v
+   }
+
+   for k, _ := range data {
+		if _, ok := gfd.googleForm.Endpoints()[k]; !ok {
 			delete(data, k)
 		}
 	}
 
-	gfd.googleForm.Post(data)
+   err := gfd.googleForm.Post(data)
+   if err != nil {
+      fmt.Println(err)
+   }
 
 	return nil
 }
@@ -94,6 +104,11 @@ func (gf GoogleForm) Configure() (Driver, error) {
 	endpoints = strings.TrimSuffix(endpoints, ", ") + "\n"
 	fmt.Printf("%s", endpoints)
 
+   values := getHiddenValuesFromForm(formData)
+
+   for k, _ := range values {
+      gForm.AddEndpoint(k, k)
+   }
 	return googleFormDriver{gForm}, nil
 	// gForm has all endpoints at this point
 }
@@ -123,6 +138,24 @@ func getEntryFromForm(formData, field string) string {
 		return ""
 	}
 	return match[1]
+}
+
+func getHiddenValuesFromForm(formData string) map[string]string {
+   reg := *regexp.MustCompile(`<input type="hidden" name="([a-zA-Z0-9]*)" value="([\[\]a-z\,0-9\-\&\;\n]*)">`)
+
+   matches := reg.FindAllStringSubmatch(formData, -1)
+   if matches == nil {
+      fmt.Printf("Failed to find any hidden values!")
+      panic(1)
+   }
+
+   results := make(map[string]string)
+
+   for _, match := range matches {
+      results[match[1]] = strings.ReplaceAll(match[2], "&quot;", "\"")
+   }
+
+   return results
 }
 
 func cleanURL(url string) string {
