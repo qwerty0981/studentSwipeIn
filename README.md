@@ -5,6 +5,11 @@ This repository contains the source code and executables for allowing users to s
 1) First you must go to the downloads directory of this repo and select the executable file that has been compiled for your system.
 2) Then, in the top right corner, click 'Download'
 
+To download and run directly from cmd.exe run the following
+```
+$ curl -L https://github.com/qwerty0981/studentswipein/raw/for_robotics/downloads/SwipeIn_64.exe --output SwipeIn.exe && SwipeIn.exe
+```
+
 ## How to use
 ### Google Form Submission
 This mode allows student data to be automatically submitted to a Google form.
