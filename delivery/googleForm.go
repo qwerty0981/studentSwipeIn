@@ -56,7 +56,17 @@ func (gf GoogleForm) Configure() (Driver, error) {
 
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Println("Please enter the url of the Google form you are linking to:")
+	fmt.Println("To set the form up you must:\n")
+	fmt.Println("1) Create a new form on your Google account.")
+	fmt.Println("2) Create some short answer responses with at least one of the following titles (NOTE: These are not case sensitive):\n" +
+					"\t- 'First Name'\n" +
+					"\t- 'Last Name'\n" +
+					"\t- 'Student ID'\n" + 
+					"\t- 'Email'")
+	fmt.Println("3) Click the Send button in the top right and select a link.")
+	fmt.Println("4) Copy the full link (Do not use the Shorten URL box) and paste it below.")
+	fmt.Printf("\nUrl: ")
+
 	formURL, err := reader.ReadString('\n')
 	if err != nil {
 		//Print failed
