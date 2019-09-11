@@ -93,15 +93,22 @@ func main() {
 	CardData := make(map[string]string)
 	for {
 		clear()
-		fmt.Println("Please swipe a card or type 'quit' to exit:")
+		fmt.Println("Please enter the section that your are in or type 'quit' to exit:")
+		section, _ := reader.ReadString('\n')
+
+		section = strings.TrimRight(section, "\n\r")
+
+		if section == "exit" || section == "quit" {
+			fmt.Println("Quiting...")
+			break
+		}
+
+		fmt.Println("Please swipe a card:")
 		scanIn, _ := reader.ReadString('\n')
 
 		scanIn = strings.TrimRight(scanIn, "\n\r")
 
-		if scanIn == "exit" || scanIn == "quit" {
-			fmt.Println("Quiting...")
-			break
-		}
+
 
 		card.Swipe(scanIn)
 
@@ -109,6 +116,7 @@ func main() {
 		CardData["Last Name"] = card.GetLastName()
 		CardData["Email"] = makeEmail(card.GetFirstName(), card.GetLastName(), card.GetID())
 		CardData["Student ID"] = card.GetID()
+		CardData["Section"] = section
 
 		driver.Input(CardData)
 
