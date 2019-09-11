@@ -37,7 +37,10 @@ func main() {
 	//errText, infoText := "[ERROR]:", "[INFO] :"
 
 	// Do delivery selection and setup here
-	initializers := []delivery.DriverInitializer{delivery.GoogleForm{}}
+	initializers := []delivery.DriverInitializer{
+		delivery.GoogleForm{},
+		delivery.CsvDriverInitializer{},
+	}
 	reader := bufio.NewReader(os.Stdin)
 
 	var option int
